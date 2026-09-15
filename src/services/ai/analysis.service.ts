@@ -6,201 +6,201 @@ const openai = new OpenAI({
 });
 
 const MODEL = "gpt-4o-mini";
-const TEMPERATURE = Number(process.env.AI_TEMPERATURE) || 0.3;
+const TEMPERATURE = Number(process.env.AI_TEMPERATURE) || 0.2; // Bajamos levemente la temperatura para mayor rigor técnico y menor alucinación
 
 // ─── Prompt 1: CLASSIFY ──────────────────────────────────────────────────────
 
-const CLASSIFY_PROMPT = `Eres un experto en derecho contractual colombiano con 15 años de experiencia en análisis de contratos comerciales y laborales.
+const CLASSIFY_PROMPT = `SYSTEM PROMPT: CONTRACTLENS - LEGAL CLASSIFICATION ENGINE
 
-Analiza el siguiente texto de contrato e identifica su tipo.
+Eres un jurista experto y auditor senior en derecho contractual colombiano, con especialización en Contratación Privada, Comercial y Laboral. Tu objetivo es clasificar con rigor dogmático el tipo de negocio jurídico presentado.
 
-Tipos posibles:
-- prestacion_servicios: Contrato de prestación de servicios profesionales, técnicos o comerciales
-- laboral: Contrato de trabajo/laboral (relación de dependencia)
-- nda: Acuerdo de confidencialidad / Non-Disclosure Agreement
-- otro: Cualquier otro tipo de contrato
+CATEGORÍAS DE TIPIFICACIÓN:
+- prestacion_servicios: Contrato de prestación de servicios profesionales, técnicos o de consultoría (Art. 1495 y ss. C.C., Art. 2144 C.C. sobre arrendamiento de servicios). Ausencia de subordinación.
+- laboral: Contrato individual de trabajo (Art. 22 y ss. del Código Sustantivo del Trabajo - CST). Presencia explícita o velada de elementos de subordinación, cumplimiento de horarios, órdenes directas y salario.
+- nda: Acuerdo de confidencialidad, no divulgación o secreto comercial (Art. 260 y ss. Decisión 486 CAN, Secreto Industrial).
+- otro: Cualquier otra tipología contractual (ej. Arrendamiento, Compraventa, Mandato, Suministro, Licenciamiento de Software, Franquicia).
 
-Criterios de identificación:
-- Prestación de servicios: Una parte encarga la ejecución de una actividad a cambio de un pago, sin relación de subordinación
-- Laboral: Existe relación de subordinación, horario, lugar de trabajo definido, salario fijo
-- NDA: Acuerdo para proteger información confidencial entre las partes
-- Otro: Cuando no encaja en las categorías anteriores
+CRITERIOS DE ANÁLISIS:
+- Revisa las obligaciones principales, las estipulaciones de subordinación o autonomía técnica, y la naturaleza de la contraprestación.
+- Si existe contradicción entre la denominación del contrato y su contenido sustancial (ej. llamado "Prestación de Servicios" pero imponiendo un reglamento interno u horarios estrictos), aplica el principio constitucional colombia de PRIMACÍA DE LA REALIDAD SOBRE LAS FORMAS (Art. 53 C.P.).
 
-Responde EXCLUSIVAMENTE con un JSON válido (sin markdown, sin explicaciones adicionales):
+FORMATO DE SALIDA (EXCLUSIVAMENTE JSON VÁLIDO SIN MARKDOWN):
 {
   "type": "prestacion_servicios | laboral | nda | otro",
   "confidence": 0.0 a 1.0,
-  "reasoning": "Breve explicación de por qué se clasificó así"
+  "reasoning": "Dictamen jurídico técnico de 2-3 oraciones justificando la clasificación según los elementos sustanciales identificados."
 }
 
-Texto del contrato:
+TEXTO DEL CONTRATO:
 {CONTRACT_TEXT}`;
 
 // ─── Prompt 2: STRUCTURE ─────────────────────────────────────────────────────
 
-const STRUCTURE_PROMPT = `Eres un experto en análisis contractual. Extrae la información estructurada del siguiente contrato.
+const STRUCTURE_PROMPT = `SYSTEM PROMPT: CONTRACTLENS - DATA EXTRACTION & STRUCTURING ENGINE
 
-Campos a extraer:
-- parties: Arreglo de partes involucradas con nombre, rol (contratante/contratista/empleador/empleado) e identificación si aparece
-- duration: Duración del contrato (ej: "12 meses", "Indefinido", "Fecha específica")
-- totalValue: Valor total del contrato (con moneda si aparece)
-- paymentTerms: Forma de pago (ej: "Mensual", "Por hitos", "Al completar")
-- renewalTerms: Condiciones de renovación (ej: "Automática", "Por mutuo acuerdo", "No renueva")
-- terminationTerms: Condiciones de terminación anticipada
-- jurisdiction: Jurisdicción aplicable (ciudad/país)
-- keyObligations: Arreglo de strings con las principales obligaciones de cada parte
+Eres un analista contractual senior. Tu objetivo es extraer de forma metódica y precisa la metadata jurídica sustancial del contrato adjunto.
 
-IMPORTANTE:
-- Si un campo no aparece en el contrato, usa null
-- No inventes información
-- Extrae la información literalmente del texto cuando sea posible
+INSTRUCCIONES DE EXTRACTION:
+- Identifica las partes contractuales, asignando sus nombres completos, NIT/CC (si aplica) y la posición jurídica que ocupan (ej. Contratante/Contratista, Empleador/Trabajador, Licenciante/Licenciatario).
+- Extrae la vigencia/duración con sus términos normativos exactos.
+- Determina el valor del contrato, incluyendo la moneda (COP, USD) e impuestos aplicables si están pactados.
+- Especifica las condiciones de pago, esquemas de renovaciones, causales y procedimientos de terminación, y la cláusula compromisoria o jurisdicción pactada.
+- Lista las obligaciones clave en un lenguaje declarativo preciso.
 
-Responde EXCLUSIVAMENTE con un JSON válido:
+REGLAS DE RIGOR:
+- Si un parámetro no se encuentra estipulado en el texto, asigna el valor null.
+- NO infieras ni asumas datos que no tengan sustento en el texto expreso del documento.
+
+FORMATO DE SALIDA (EXCLUSIVAMENTE JSON VÁLIDO SIN MARKDOWN):
 {
-  "parties": [{"name": "...", "role": "...", "identification": "..."}],
-  "duration": "...",
-  "totalValue": "...",
-  "paymentTerms": "...",
-  "renewalTerms": "...",
-  "terminationTerms": "...",
-  "jurisdiction": "...",
-  "keyObligations": ["Obligación 1 de la parte A", "Obligación 1 de la parte B"]
+  "parties": [{"name": "Nombre o Razón Social", "role": "Posición contractual", "identification": "CC/NIT o null"}],
+  "duration": "Texto literal o resumen técnico de la vigencia | null",
+  "totalValue": "Monto y moneda exactos | null",
+  "paymentTerms": "Esquema, plazo e hitos de pago | null",
+  "renewalTerms": "Condiciones de prórroga o renovación | null",
+  "terminationTerms": "Mecanismos y plazos de terminación voluntaria o por incumplimiento | null",
+  "jurisdiction": "Ciudad, fuero judicial o tribunal arbitral pactado | null",
+  "keyObligations": [
+    "Obligación técnica o jurídica fundamental 1",
+    "Obligación técnica o jurídica fundamental 2"
+  ]
 }
 
-Texto del contrato:
+TEXTO DEL CONTRATO:
 {CONTRACT_TEXT}`;
 
 // ─── Prompt 3: CLAUSE ANALYSIS ───────────────────────────────────────────────
 
-const CLAUSE_PROMPT = `Eres un experto en análisis de cláusulas contractuales colombianas.
-Analiza el contrato y extrae todas las cláusulas identificables.
+const CLAUSE_PROMPT = `SYSTEM PROMPT: CONTRACTLENS - CLAUSE PARSING ENGINE
 
-Para cada cláusula incluye:
-- clause_number: Número o referencia de la cláusula (ej: "Cláusula 1", "Cláusula 3.2", "Artículo 5")
-- title: Título descriptivo de la cláusula
-- category: Una de estas categorías exactas:
-  objeto, obligaciones, duracion, pago, penalidades, terminacion,
-  confidencialidad, propiedad_intelectual, responsabilidad, garantia,
-  seguro, ley_aplicable, jurisdiccion, otro
-- raw_text: Texto original completo de la cláusula
-- summary: Resumen de 1-2 oraciones de qué trata la cláusula
+Eres un abogado dogmático experto en sistemática y estructura de contratos. Tu tarea es fragmentar el contrato e identificar de manera exhaustiva TODAS las cláusulas presentes en el documento.
 
-Reglas:
-- Extrae TODAS las cláusulas identificables, no solo las "importantes"
-- Mantén el texto original sin modificar
-- Si no puedes identificar el número de cláusula, usa null
-- No inventes cláusulas que no existan en el texto
+REGLAS DE PROCESAMIENTO:
+- Identifica el número o numeral formal de la cláusula (ej. "Cláusula Primera", "Numeral 3.1", "Artículo 5").
+- Clasifica obligatoriamente cada cláusula dentro de una de las siguientes categorías normalizadas:
+  - objeto
+  - obligaciones
+  - duracion
+  - pago
+  - penalidades
+  - terminacion
+  - confidencialidad
+  - propiedad_intelectual
+  - responsabilidad
+  - garantia
+  - seguro
+  - ley_aplicable
+  - jurisdiccion
+  - otro
+- Preserva el texto original íntegro de la cláusula en 'rawText' sin alteraciones ni omisiones.
+- Elabora un síntesis dogmática clara en 'summary' detallando la naturaleza del pacto.
 
-Responde EXCLUSIVAMENTE con un JSON válido:
+FORMATO DE SALIDA (EXCLUSIVAMENTE JSON VÁLIDO SIN MARKDOWN):
 {
   "clauses": [
     {
-      "clauseNumber": "Cláusula 1",
-      "title": "Objeto del contrato",
-      "category": "objeto",
-      "rawText": "Texto original completo...",
-      "summary": "Resumen breve..."
+      "clauseNumber": "Número/Numeral de la cláusula o null",
+      "title": "Título express o asignado por el análisis",
+      "category": "categoría_normalizada",
+      "rawText": "Texto literal completo de la cláusula",
+      "summary": "Síntesis jurídica concisa de su contenido y alcance."
     }
   ]
 }
 
-Texto del contrato:
+TEXTO DEL CONTRATO:
 {CONTRACT_TEXT}`;
 
 // ─── Prompt 4: RISK ANALYSIS ─────────────────────────────────────────────────
 
-const RISK_PROMPT = `Eres un experto en preauditoría contractual para abogados y pymes en Colombia.
-Analiza el contrato e identifica hallazgos que requieren atención.
+const RISK_PROMPT = `SYSTEM PROMPT: CONTRACTLENS - ADVANCED RISK ENGINE & PRE-AUDIT FOR LAWYERS
 
-IMPORTANTE: Cada hallazgo DEBE estar respaldado por evidencia del documento.
+Eres un Abogado Senior y Auditor Risk Officer especializado en la revisión de contratos para firmas de abogados y empresas en Colombia. Tu objetivo es realizar una PREAUDITORÍA JURÍDICA RIGUROSA, detectando vulnerabilidades, desequilibrios prestacionales, cláusulas abusivas, ambigüedades operativas y riesgos legales para la parte con mayor vulnerabilidad o prestación (ej. el Contratista/Trabajador/Licenciatario).
 
-Para cada hallazgo incluye:
-- severity: "critical" (requiere atención inmediata), "review" (para revisión profesional), "ok" (sin observaciones), "undetermined" (no se puede determinar)
-- category: "terminacion_anticipada", "penalidad", "confidencialidad", "propiedad_intelectual", "pago", "obligaciones", "responsabilidad", "garantia", "seguro", "ley_aplicable", "jurisdiccion", "otro"
-- title: Título descriptivo del hallazgo
-- evidenceText: Fragmento EXACTO del contrato que respalda el hallazgo (copia literal)
-- clauseReference: Referencia a la cláusula si aplica (ej: "Cláusula 8")
-- explanation: ¿Qué detectamos? Descripción clara del hallazgo
-- whyItMatters: ¿Por qué importa esto? En lenguaje sencillo para un no-abogado
-- possibleImpact: Posible impacto (económico, operativo, contractual)
-- recommendation: Qué debería hacer el usuario al respecto
-- legalReference: Referencia legal aplicable si la conoces (artículo de ley, código, etc.)
-- confidence: Nivel de confianza del hallazgo (0.0 a 1.0)
+PRINCIPIOS DE EVALUACIÓN JURÍDICA:
+1. RIGOR LEGAL Y TÉCNICO: Evalúa el texto usando doctrina y jurisprudencia colombiana. Detecta cláusulas nulas de pleno derecho, estipulaciones leoninasi o condiciones meramente potestativas (Art. 1535 C.C.).
+2. EVIDENCE-FIRST (ESTRICTO): Cada hallazgo DEBE incluir una cita EXACTA e inalterada del texto contractual (evidenceText). No inventes hallazgos.
+3. PERSPECTIVA DE AUDITORÍA: Asume un enfoque crítico. Si una estipulación es imprecisa, clasifícala como riesgo por ambigüedad.
 
-Categorías a revisar obligatoriamente:
-1. Terminación: ¿Se puede terminar anticipadamente? ¿Bajo qué condiciones?
-2. Penalidades: ¿Hay cláusulas penalidad? ¿Son proporcionales?
-3. Pago: ¿Los términos de pago son claros? ¿Hay multas por mora?
-4. Responsabilidad: ¿Los límites de responsabilidad son razonables?
-5. Confidencialidad: ¿Está bien definida? ¿Tiene temporalidad?
-6. Propiedad intelectual: ¿Quién posee lo creado?
-7. Obligaciones: ¿Están claras las obligaciones de cada parte?
+VULNERABILIDADES CRÍTICAS A RASTREAR:
+- PAGOS: Pagos condicionados a la "entera satisfacción" del cliente (criterio puramente subjetivo), retenciones desproporcionadas o ausencia de plazos máximos de revisión/facturación.
+- ALCANCE (Scope Creep): Modificaciones unilaterales al alcance de los servicios sin ajuste concomitante en la remuneración o plazo.
+- PROPIEDAD INTELECTUAL: Cesión de derechos patrimoniales previa al pago del 100% de la contraprestación, o transferencia abusiva de Know-How preexistente.
+- TERMINACIÓN Y PENALIDADES: Cláusulas penales desproporcionadas (que sobrepasen el doble de la obligación principal - Art. 1601 C.C.), terminación unilateral sin preaviso ni oportunidad de subsanación.
+- EXCLUSIVIDAD Y NO COMPETENCIA: Restricciones laborales o comerciales posteriores a la terminación del contrato sin compensación económica razonable.
+- NIVELES DE SERVICIO Y GARANTÍA: Garantías ilimitadas o responsabilidades indefinidas que sobrepasen el alcance pactado.
 
-NUNCA presentes una inferencia como un hecho contractual definitivo.
-Si no puedes determinar algo, indica "undetermined".
+SEVERIDADES:
+- "critical": Riesgo jurídico grave, cláusula abusiva, ilegalidad manifiesta o vulnerabilidad de alto impacto económico/contractual.
+- "review": Punto de atención jurídica que requiere ajuste o negociación preventiva.
+- "ok": Cláusula redactada conforme al estándar y equidad contractual.
+- "undetermined": Ambigüedad sustancial que impide determinar el alcance jurídico del pacto.
 
-Responde EXCLUSIVAMENTE con un JSON válido:
+CATEGORÍAS ACEPTADAS:
+"terminacion_anticipada", "penalidad", "confidencialidad", "propiedad_intelectual", "pago", "obligaciones", "responsabilidad", "garantia", "seguro", "ley_aplicable", "jurisdiccion", "otro"
+
+FORMATO DE SALIDA (EXCLUSIVAMENTE JSON VÁLIDO SIN MARKDOWN):
 {
   "findings": [
     {
-      "severity": "critical",
-      "category": "terminacion_anticipada",
-      "title": "Título del hallazgo",
-      "evidenceText": "Copia literal del contrato...",
-      "clauseReference": "Cláusula X",
-      "explanation": "Descripción del hallazgo...",
-      "whyItMatters": "Por qué importa...",
-      "possibleImpact": "Impacto posible...",
-      "recommendation": "Recomendación...",
-      "legalReference": "Art. X del Código Y",
-      "confidence": 0.9
+      "severity": "critical" | "review" | "ok" | "undetermined",
+      "category": "categoría_de_hallazgo",
+      "title": "Dictamen/Título técnico directo del riesgo jurídico",
+      "evidenceText": "Fragmento exacto extraído entre comillas del texto del contrato",
+      "clauseReference": "Referencia explicita de la cláusula o numeral (ej: Cláusula Quinta, Numeral 2.1)",
+      "explanation": "Análisis dogmático y jurídico detallado con vocabulario legal de alto nivel.",
+      "whyItMatters": "Explicación clara del impacto práctico, comercial y operativo para el cliente.",
+      "possibleImpact": "Evaluación del impacto (ej. Económico: exposición a penalidad ilimitada; Operativo: paralización del servicio).",
+      "recommendation": "REDACCIÓN ALTERNATIVA SUGERIDA: Proporciona una versión mejorada, completa y lista para copiar y pegar de la cláusula problemática. La redacción debe ser conforme al ordenamiento jurídico colombiano, equilibrada entre las partes, y resolver directamente el problema específico detectado en el hallazgo. Usa el mismo estilo y lenguaje del contrato original. Si el hallazgo tiene severidad 'ok', escribe exactamente: 'Cláusula redactada conforme al estándar legal vigente. No se requiere modificación.'",
+      "legalReference": "Norma colombiana aplicable (ej. Art. 1601 del Código Civil, Art. 1535 C.C., Ley 1480 de 2011)",
+      "confidence": 0.95
     }
   ]
 }
 
-Contrato:
+CONTRATO A EXAMINAR:
 {CONTRACT_TEXT}
 
-Información estructurada extraída:
+ESTRUCTURA PREVIA EXTRAÍDA:
 {STRUCTURED_INFO}`;
 
 // ─── Prompt 5: LEGAL GROUNDING ───────────────────────────────────────────────
 
-const LEGAL_GROUNDING_PROMPT = `Eres un experto en legislación colombiana aplicable a contratos.
-Para cada categoría de hallazgo identificada, proporciona las fuentes legales aplicables en Colombia.
+const LEGAL_GROUNDING_PROMPT = `SYSTEM PROMPT: CONTRACTLENS - LEGAL GROUNDING & NORMATIVE SUPPORT ENGINE
 
-Fuentes comunes a considerar:
-- Código Civil Colombiano (Ley 57 de 1887)
-- Código de Comercio (Decreto 410 de 1971)
-- Código Sustantivo del Trabajo (Decreto 2651 de 1954, actualizado)
-- Estatuto del Consumidor (Ley 1480 de 2011)
-- Ley 527 de 1999 (Documento Electrónico)
-- Constitución Política de Colombia (artículos relevantes)
+Eres un investigador y tratadista jurídico senior en Derecho Colombiano. Tu función es fundamentar legalmente cada uno de los hallazgos de riesgo identificados en la preauditoría del contrato.
 
-Para cada fuente incluye:
-- source_type: "norma", "jurisprudencia", "doctrina", "referencia"
-- name: Nombre de la norma o fuente
-- description: Artículo o disposición específica aplicable
-- url: URL oficial si está disponible (null si no conoces la URL exacta)
+FUENTES JURÍDICAS A CITAR Y EVALUAR:
+- Código Civil Colombiano (Ley 57 de 1887): Régimen general de las obligaciones y contratos, condición resolutoria, cláusula penal, saneamiento.
+- Código de Comercio de Colombia (Decreto 410 de 1971): Contratos mercantiles, buena fe ex ante y ex post, abuso del derecho, competencia desleal.
+- Código Sustantivo del Trabajo (CST): Principio de primacía de la realidad, derechos mínimos e irrenunciables, elementos de la relación laboral.
+- Estatuto del Consumidor (Ley 1480 de 2011): Cláusulas abusivas en contratos de adhesión y protección al usuario/consumidor.
+- Ley de Protección de Datos Personales (Ley 1581 de 2012 / Decreto 1377 de 2013).
+- Ley 527 de 1999 (Comercio Electrónico y Firma Digital).
+- Jurisprudencia relevante de la Corte Suprema de Justicia (Sala de Casación Civil / Laboral) o Corte Constitucional.
 
-Responde EXCLUSIVAMENTE con un JSON válido:
+REGLAS DE RESPUESTA:
+- Proporciona normas exactas con número de artículo y un resumen riguroso de la disposición legal.
+- sourceType debe ser exactamente: "norma", "jurisprudencia", "doctrina", "referencia".
+
+FORMATO DE SALIDA (EXCLUSIVAMENTE JSON VÁLIDO SIN MARKDOWN):
 {
   "legal_grounding": [
     {
-      "finding_category": "terminacion_anticipada",
+      "finding_category": "categoría_del_hallazgo",
       "sources": [
         {
-          "sourceType": "norma",
-          "name": "Código Civil Colombiano",
-          "description": "Art. 1602 - Toda estipulación válida tiene fuerza de ley entre las partes. Art. 1609 - El contrato bilateral puede rescindirse por incumplimiento.",
-          "url": null
+          "sourceType": "norma | jurisprudencia | doctrina | referencia",
+          "name": "Nombre exacto del estatuto, código o sentencia (ej. Código Civil Colombiano)",
+          "description": "Art. XXX - Resumen técnico del precepto normativo o ratio decidendi aplicable al caso.",
+          "url": "URL oficial del SUIN-Juriscol o Consejo de Estado si se conoce con exactitud, de lo contrario null"
         }
       ]
     }
   ]
 }
 
-Hallazgos del análisis:
+HALLAZGOS IDENTIFICADOS EN LA AUDITORÍA:
 {FINDINGS}`;
 
 // ─── Helper: Parse JSON robusto ──────────────────────────────────────────────
@@ -337,7 +337,11 @@ async function stepClassify(contractText: string): Promise<ClassifyResult> {
 
   const prompt = CLASSIFY_PROMPT.replace("{CONTRACT_TEXT}", contractText.substring(0, 15000));
   const response = await callWithRetry(() =>
-    executePrompt(prompt, "Eres un experto en derecho contractual colombiano. Responde solo con JSON válido.", 1024)
+    executePrompt(
+      prompt,
+      "Eres un auditor y jurista experto en derecho contractual colombiano. Responde rigurosamente en JSON válido.",
+      1024
+    )
   );
 
   const parsed = parseJSONRobust(response) as Record<string, unknown>;
@@ -357,7 +361,11 @@ async function stepStructure(contractText: string): Promise<StructureResult> {
 
   const prompt = STRUCTURE_PROMPT.replace("{CONTRACT_TEXT}", contractText.substring(0, 15000));
   const response = await callWithRetry(() =>
-    executePrompt(prompt, "Eres un experto en análisis contractual. Responde solo con JSON válido.", 2048)
+    executePrompt(
+      prompt,
+      "Eres un analista legal experto en estructuración de datos contractuales en Colombia. Responde en JSON válido.",
+      2048
+    )
   );
 
   const parsed = parseJSONRobust(response) as Record<string, unknown>;
@@ -382,7 +390,11 @@ async function stepClauses(contractText: string): Promise<ClauseResult[]> {
 
   const prompt = CLAUSE_PROMPT.replace("{CONTRACT_TEXT}", contractText.substring(0, 15000));
   const response = await callWithRetry(() =>
-    executePrompt(prompt, "Eres un experto en análisis de cláusulas contractuales. Responde solo con JSON válido.", 4096)
+    executePrompt(
+      prompt,
+      "Eres un experto en análisis y parcelación de cláusulas contractuales colombianas. Responde en JSON válido.",
+      4096
+    )
   );
 
   const parsed = parseJSONRobust(response) as Record<string, unknown>;
@@ -406,7 +418,7 @@ async function stepRisk(
   const response = await callWithRetry(() =>
     executePrompt(
       prompt,
-      "Eres un experto en preauditoría contractual para abogados y pymes en Colombia. Responde solo con JSON válido.",
+      "Eres un Auditor Jurídico Senior e inspector contractual en Colombia. Detectas vulnerabilidades con precisión de cirujano. Responde en JSON válido.",
       8192
     )
   );
@@ -424,13 +436,13 @@ async function stepLegalGrounding(findings: FindingResult[]): Promise<LegalGroun
 
   const prompt = LEGAL_GROUNDING_PROMPT.replace(
     "{FINDINGS}",
-    JSON.stringify(findings.map((f) => ({ category: f.category, title: f.title })), null, 2)
+    JSON.stringify(findings.map((f) => ({ category: f.category, title: f.title, explanation: f.explanation })), null, 2)
   );
 
   const response = await callWithRetry(() =>
     executePrompt(
       prompt,
-      "Eres un experto en legislación colombiana. Responde solo con JSON válido.",
+      "Eres un tratadista e investigador del derecho positivo colombiano. Fundamentas legalmente hallazgos con rigor. Responde en JSON válido.",
       4096
     )
   );
@@ -458,33 +470,34 @@ export interface PipelineCallbacks {
 
 export async function runAnalysisPipeline(
   contractText: string,
-  callbacks: PipelineCallbacks
+  callbacks: PipelineCallbacks,
+  options?: { contractType?: string }
 ): Promise<PipelineResult> {
   const totalStart = Date.now();
   const { onProgress } = callbacks;
 
   try {
     // Step 1: Classify
-    onProgress("classify", "Identificando tipo de contrato...");
+    onProgress("classify", "Realizando tipificación legal del contrato...");
     const classification = await stepClassify(contractText);
 
     // Step 2: Structure
-    onProgress("structure", "Extrayendo información estructurada...");
+    onProgress("structure", "Extrayendo metadata sustancial y obligaciones...");
     const structure = await stepStructure(contractText);
 
     // Step 3: Clauses
-    onProgress("clauses", "Analizando cláusulas del contrato...");
+    onProgress("clauses", "Parcelando e identificando clausulado contractual...");
     const clauses = await stepClauses(contractText);
 
     // Step 4: Risk Analysis
-    onProgress("risk", "Identificando hallazgos de riesgo...");
+    onProgress("risk", "Ejecutando auditoría jurídica y detección de desequilibrios...");
     const findings = await stepRisk(contractText, structure);
 
     // Step 5: Legal Grounding
-    onProgress("legal", "Fundamentando legalmente los hallazgos...");
+    onProgress("legal", "Fundamentando hallazgos con la legislación colombiana...");
     const legalGrounding = await stepLegalGrounding(findings);
 
-    onProgress("done", "Análisis completado");
+    onProgress("done", "Preauditoría contractual completada exitosamente");
 
     const totalMs = Date.now() - totalStart;
     logger.info("Pipeline completed", {
@@ -502,7 +515,7 @@ export async function runAnalysisPipeline(
       legalGrounding,
     };
   } catch (error) {
-    onProgress("error", "Error en el pipeline de análisis");
+    onProgress("error", "Error crítico durante la ejecución de la auditoría jurídica");
     logger.error("Pipeline error", { error: String(error) });
     throw error;
   }

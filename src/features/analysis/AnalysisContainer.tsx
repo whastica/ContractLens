@@ -7,10 +7,12 @@ import { AnalysisSidebar } from "./AnalysisSidebar";
 import { AnalysisLoader } from "./AnalysisLoader";
 import { AnalysisResults } from "./AnalysisResults";
 import { AnalysisEmpty } from "./AnalysisEmpty";
+import type { ContractType } from "@/types";
 
 export function AnalysisContainer() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [text, setText] = useState("");
+  const [contractType, setContractType] = useState<ContractType | null>(null);
 
   const { result: persistedResult, setResult, clearResult } = useLastAnalysis();
 
@@ -29,13 +31,14 @@ export function AnalysisContainer() {
   const showResults = !!(status === "done" && (freshResult || persistedResult));
 
   const handleAnalyze = async () => {
-    await analyze(selectedFile, text);
+    await analyze(selectedFile, text, contractType);
   };
 
   const handleReset = () => {
     reset();
     setSelectedFile(null);
     setText("");
+    setContractType(null);
     clearResult();
   };
 
@@ -78,6 +81,8 @@ export function AnalysisContainer() {
         onFileClear={() => setSelectedFile(null)}
         text={text}
         onTextChange={setText}
+        contractType={contractType}
+        onContractTypeChange={setContractType}
         onAnalyze={handleAnalyze}
         disabled={!selectedFile && text.trim().length < 100}
       />

@@ -10,6 +10,7 @@ export async function createContract(
     fileSizeBytes: number;
     rawText: string;
     detectedType?: string;
+    confirmedType?: string;
   }
 ): Promise<DbContract> {
   const stop = logger.time("createContract");
@@ -25,6 +26,7 @@ export async function createContract(
       file_size_bytes: data.fileSizeBytes,
       raw_text: data.rawText,
       detected_type: data.detectedType ?? null,
+      confirmed_type: data.confirmedType ?? null,
       status: "uploaded",
     })
     .select()

@@ -4,6 +4,8 @@ import { FileSearch, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { UploadZone } from "@/features/upload/UploadZone";
+import { ContractTypeSelector } from "./ContractTypeSelector";
+import type { ContractType } from "@/types";
 
 interface AnalysisSidebarProps {
   selectedFile: File | null;
@@ -11,6 +13,8 @@ interface AnalysisSidebarProps {
   onFileClear: () => void;
   text: string;
   onTextChange: (value: string) => void;
+  contractType: ContractType | null;
+  onContractTypeChange: (type: ContractType | null) => void;
   onAnalyze: () => void;
   disabled: boolean;
 }
@@ -21,6 +25,8 @@ export function AnalysisSidebar({
   onFileClear,
   text,
   onTextChange,
+  contractType,
+  onContractTypeChange,
   onAnalyze,
   disabled,
 }: AnalysisSidebarProps) {
@@ -44,6 +50,9 @@ export function AnalysisSidebar({
           onClear={onFileClear}
         />
       </div>
+
+      {/* Contract type selector */}
+      <ContractTypeSelector value={contractType} onChange={onContractTypeChange} />
 
       {/* Divider */}
       <div className="relative">

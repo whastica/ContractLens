@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { FileSearch, ArrowRight, Shield, Clock, Search, FileText } from "lucide-react";
+import { ArrowRight, Shield, Clock, Search, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MarketingNav } from "@/components/layout/MarketingNav";
+import { MarketingFooter } from "@/components/layout/MarketingFooter";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
 import { ROUTES } from "@/constants";
 
@@ -141,20 +142,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-border px-6 py-8">
-        <div className="mx-auto max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <FileSearch className="h-4 w-4 text-primary" />
-            <span className="font-heading text-sm font-600">
-              Contract<span className="text-accent">Lens</span>
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            2026 ContractLens. Analisis preliminar asistido por IA. No sustituye asesoria juridica profesional.
-          </p>
-        </div>
-      </footer>
+      <MarketingFooter />
     </div>
   );
 }

@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { FileText, Clock, Plus, Loader2, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+
+const PAGE_SIZE = 10;
 
 interface Contract {
   id: string;
@@ -24,6 +27,8 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function ContractsPage() {
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
   const { data, isLoading } = useQuery<Contract[]>({
     queryKey: ["contracts"],
     queryFn: async () => {
@@ -34,6 +39,9 @@ export default function ContractsPage() {
     },
   });
 
+  const visibleItems = data?.slice(0, visibleCount) ?? [];
+  const hasMore = data ? visibleCount < data.length : false;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -41,6 +49,11 @@ export default function ContractsPage() {
           <h1 className="text-2xl font-heading font-700">Contratos</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Contratos subidos y analizados.
+            {data && data.length > 0 && (
+              <span className="ml-1 text-muted-foreground/70">
+                ({data.length} total)
+              </span>
+            )}
           </p>
         </div>
         <Button asChild className="gap-1.5">
@@ -72,35 +85,52 @@ export default function ContractsPage() {
           </Button>
         </div>
       ) : (
-        <div className="space-y-3">
-          {data.map((contract) => (
-            <div
-              key={contract.id}
-              className="flex items-center gap-4 rounded-xl border border-border bg-card/50 p-4 hover:bg-card/80 transition-colors"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{contract.name}</p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{contract.file_type.toUpperCase()}</span>
-                  <span>-</span>
-                  <Clock className="h-3 w-3" />
-                  <span>
-                    {new Date(contract.created_at).toLocaleDateString("es-CO")}
-                  </span>
-                </div>
-              </div>
-              <Badge
-                variant="outline"
-                className={STATUS_STYLES[contract.status] ?? ""}
+        <>
+          <div className="space-y-3">
+            {visibleItems.map((contract) => (
+              <div
+                key={contract.id}
+                className="flex items-center gap-4 rounded-xl border border-border bg-card/50 p-4 hover:bg-card/80 transition-colors"
               >
-                {contract.status}
-              </Badge>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{contract.name}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{contract.file_type.toUpperCase()}</span>
+                    <span>-</span>
+                    <Clock className="h-3 w-3" />
+                    <span>
+                      {new Date(contract.created_at).toLocaleDateString("es-CO")}
+                    </span>
+                  </div>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={STATUS_STYLES[contract.status] ?? ""}
+                >
+                  {contract.status}
+                </Badge>
+              </div>
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="flex justify-center pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+                className="gap-1.5"
+              >
+                Cargar mas
+                <span className="text-xs text-muted-foreground">
+                  ({data.length - visibleCount} restantes)
+                </span>
+              </Button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

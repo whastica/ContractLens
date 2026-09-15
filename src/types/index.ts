@@ -238,7 +238,8 @@ export type AnalysisPhase =
   | "error";
 
 export interface PipelineStep {
-  step: string;
+  id: string;
+  label: string;
   status: "pending" | "active" | "done" | "error";
   durationMs?: number;
 }

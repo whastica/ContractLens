@@ -70,7 +70,7 @@ interface UseAnalysisState {
 }
 
 interface UseAnalysisReturn extends UseAnalysisState {
-  analyze: (file: File | null, text: string) => Promise<void>;
+  analyze: (file: File | null, text: string, contractType?: ContractType | null) => Promise<void>;
   reset: () => void;
 }
 
@@ -126,7 +126,7 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
   }, []);
 
   const analyze = useCallback(
-    async (file: File | null, text: string) => {
+    async (file: File | null, text: string, contractType?: ContractType | null) => {
       if (!file && !text.trim()) return;
 
       abortRef.current = false;
@@ -164,7 +164,10 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
         const res = await fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: inputText }),
+          body: JSON.stringify({
+            text: inputText,
+            ...(contractType ? { contractType } : {}),
+          }),
         });
 
         if (!res.ok || !res.body) {

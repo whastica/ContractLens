@@ -25,7 +25,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { contractId, text } = body as { contractId?: string; text?: string };
+    const { contractId, text, contractType } = body as {
+      contractId?: string;
+      text?: string;
+      contractType?: string;
+    };
 
     if (!text || typeof text !== "string" || text.length < 100) {
       return apiError("BAD_REQUEST", "El texto del contrato debe tener al menos 100 caracteres.");
@@ -53,7 +57,7 @@ export async function POST(request: NextRequest) {
                 encoder.encode(`data: ${JSON.stringify({ type: "progress", phase, message })}\n\n`)
               );
             },
-          });
+          }, { contractType });
 
           const latencyMs = Date.now() - startTime;
 
@@ -68,6 +72,7 @@ export async function POST(request: NextRequest) {
                 fileSizeBytes: text.length,
                 rawText: text,
                 detectedType: result.classification.type,
+                confirmedType: contractType ?? undefined,
               });
             } else {
               await updateContractStatus(contract.id, userId, "completed");
