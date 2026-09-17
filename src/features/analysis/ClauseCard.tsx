@@ -1,6 +1,7 @@
 "use client";
 
-import { FileText, Hash } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -31,41 +32,72 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export function ClauseCard({ clause }: ClauseCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const categoryColor =
     CATEGORY_COLORS[clause.category ?? ""] ?? "bg-muted text-muted-foreground border-border";
 
   return (
-    <div className="rounded-xl border border-border bg-card/30 p-4">
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="flex items-center gap-2">
-          {clause.clauseNumber && (
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-muted text-xs font-medium">
-              <Hash className="h-3 w-3" />
-              <span className="ml-0.5">{clause.clauseNumber}</span>
-            </div>
+    <div className="group rounded-xl border border-border/50 bg-card/50 transition-all hover:border-border hover:bg-card/80">
+      <div className="p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            {clause.clauseNumber && (
+              <span className="inline-flex h-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 px-2.5 text-xs font-semibold text-primary">
+                {clause.clauseNumber}
+              </span>
+            )}
+            <h4 className="text-sm font-semibold leading-snug break-words">
+              {clause.title}
+            </h4>
+          </div>
+
+          {clause.category && (
+            <Badge
+              variant="outline"
+              className={cn(
+                "shrink-0 text-[10px] font-medium capitalize self-start",
+                categoryColor
+              )}
+            >
+              {clause.category.replace(/_/g, " ")}
+            </Badge>
           )}
-          <h4 className="text-sm font-semibold">{clause.title}</h4>
         </div>
 
-        {clause.category && (
-          <Badge variant="outline" className={cn("text-[10px]", categoryColor)}>
-            {clause.category.replace(/_/g, " ")}
-          </Badge>
+        {clause.summary && (
+          <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+            {clause.summary}
+          </p>
         )}
       </div>
 
-      {clause.summary && (
-        <p className="text-sm text-muted-foreground mb-2">{clause.summary}</p>
+      {clause.rawText && (
+        <div className="border-t border-border/50">
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex w-full items-center gap-2 px-4 sm:px-5 py-3 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            <span>Texto completo</span>
+            <ChevronDown
+              className={cn(
+                "ml-auto h-3.5 w-3.5 transition-transform duration-200",
+                isExpanded && "rotate-180"
+              )}
+            />
+          </button>
+          {isExpanded && (
+            <div className="px-4 sm:px-5 pb-4">
+              <div className="rounded-lg bg-muted/50 p-4">
+                <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap font-mono">
+                  {clause.rawText}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       )}
-
-      <details className="group">
-        <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
-          Ver texto completo
-        </summary>
-        <p className="mt-2 text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
-          {clause.rawText}
-        </p>
-      </details>
     </div>
   );
 }
