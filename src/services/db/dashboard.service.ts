@@ -70,10 +70,10 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     critical_count: number;
     review_count: number;
     created_at: string;
-    contracts: { name: string } | null;
+    contracts: Array<{ name: string }> | { name: string } | null;
   }>).map((a) => ({
     id: a.id,
-    contractName: a.contracts?.name ?? "Contrato sin nombre",
+    contractName: (Array.isArray(a.contracts) ? a.contracts[0]?.name : a.contracts?.name) ?? "Contrato sin nombre",
     contractType: a.contract_type,
     criticalCount: a.critical_count ?? 0,
     reviewCount: a.review_count ?? 0,

@@ -1,10 +1,26 @@
 import { createClient } from "@supabase/supabase-js";
+import { createHash } from "crypto";
 
 const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceKey   = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 if (!supabaseUrl) throw new Error("NEXT_PUBLIC_SUPABASE_URL no está configurada");
 if (!serviceKey)  throw new Error("SUPABASE_SERVICE_ROLE_KEY no está configurada");
+
+/**
+ * Convierte un Clerk user ID (string) a un UUID v4 determinístico.
+ * Siempre produce el mismo UUID para el mismo Clerk ID.
+ */
+export function clerkIdToUuid(clerkId: string): string {
+  const hash = createHash("sha256").update(clerkId).digest("hex");
+  return [
+    hash.slice(0, 8),
+    hash.slice(8, 12),
+    "5" + hash.slice(13, 16),
+    ((parseInt(hash.charAt(16), 16) & 0x3) | 0x8).toString(16) + hash.slice(17, 20),
+    hash.slice(20, 32),
+  ].join("-");
+}
 
 export function getSupabaseServer() {
   return createClient(supabaseUrl, serviceKey, {

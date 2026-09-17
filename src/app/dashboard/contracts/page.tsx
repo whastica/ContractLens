@@ -32,7 +32,7 @@ export default function ContractsPage() {
   const { data, isLoading } = useQuery<Contract[]>({
     queryKey: ["contracts"],
     queryFn: async () => {
-      const res = await fetch("/api/analyses");
+      const res = await fetch("/api/contracts");
       if (!res.ok) return [];
       const body = await res.json();
       return body.data ?? [];
@@ -98,7 +98,7 @@ export default function ContractsPage() {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{contract.name}</p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{contract.file_type.toUpperCase()}</span>
+                    <span>{contract.file_type?.toUpperCase() ?? "N/A"}</span>
                     <span>-</span>
                     <Clock className="h-3 w-3" />
                     <span>

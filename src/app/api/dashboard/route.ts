@@ -1,11 +1,13 @@
 import { requireAuth } from "@/lib/auth";
 import { catchApiError, apiResponse } from "@/lib/api";
+import { clerkIdToUuid } from "@/lib/supabase";
 import { getDashboardData } from "@/services/db/dashboard.service";
 import { useMockDB } from "@/lib/env";
 
 export async function GET() {
   return catchApiError(async () => {
     const { userId } = await requireAuth();
+    const dbUserId = clerkIdToUuid(userId);
 
     if (useMockDB) {
       return apiResponse({
@@ -18,7 +20,7 @@ export async function GET() {
       });
     }
 
-    const data = await getDashboardData(userId);
+    const data = await getDashboardData(dbUserId);
     return apiResponse(data);
   });
 }

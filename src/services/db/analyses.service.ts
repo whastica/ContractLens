@@ -97,7 +97,7 @@ export async function getAnalysisById(
 export async function getAnalysesByUser(
   userId: string,
   limit = 50
-): Promise<DbAnalysis[]> {
+) {
   const supabase = getSupabaseServer();
 
   const { data, error } = await supabase
@@ -112,7 +112,15 @@ export async function getAnalysesByUser(
     throw new Error(`Failed to get analyses: ${error.message}`);
   }
 
-  return (data ?? []) as DbAnalysis[];
+  const rows = (data ?? []) as Array<Record<string, unknown> & { contracts: Array<{ name: string }> | { name: string } | null }>;
+
+  return rows.map((row) => {
+    const { contracts, ...rest } = row;
+    return {
+      ...rest,
+      contracts: Array.isArray(contracts) ? contracts[0] ?? null : contracts,
+    };
+  });
 }
 
 export async function getAnalysesByContract(

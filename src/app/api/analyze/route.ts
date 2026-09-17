@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/auth";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { catchApiError, apiResponse, apiError } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { clerkIdToUuid } from "@/lib/supabase";
 import { runAnalysisPipeline } from "@/services/ai/analysis.service";
 import {
   createContract,
@@ -17,9 +18,10 @@ import { useMockDB } from "@/lib/env";
 export async function POST(request: NextRequest) {
   return catchApiError(async () => {
     const { userId } = await requireAuth();
+    const dbUserId = clerkIdToUuid(userId);
 
     const ip = getClientIp(request);
-    const rateLimit = await checkRateLimit(userId ?? ip);
+    const rateLimit = await checkRateLimit(dbUserId ?? ip);
     if (!rateLimit.allowed) {
       return apiError("RATE_LIMITED", "Límite de solicitudes alcanzado. Intenta de nuevo en un minuto.");
     }
@@ -38,7 +40,7 @@ export async function POST(request: NextRequest) {
     // If contractId provided, verify it belongs to user
     let contract = null;
     if (contractId) {
-      contract = await getContractById(contractId, userId);
+      contract = await getContractById(contractId, dbUserId);
       if (!contract) {
         return apiError("NOT_FOUND", "Contrato no encontrado.");
       }
@@ -65,7 +67,7 @@ export async function POST(request: NextRequest) {
           if (!useMockDB) {
             // Create or update contract
             if (!contract) {
-              contract = await createContract(userId, {
+              contract = await createContract(dbUserId, {
                 name: `Contrato - ${new Date().toLocaleDateString("es-CO")}`,
                 fileName: "uploaded",
                 fileType: "pdf",
@@ -75,12 +77,12 @@ export async function POST(request: NextRequest) {
                 confirmedType: contractType ?? undefined,
               });
             } else {
-              await updateContractStatus(contract.id, userId, "completed");
+              await updateContractStatus(contract.id, dbUserId, "completed");
             }
 
             // Save analysis
             const analysis = await createAnalysis(
-              userId,
+              dbUserId,
               contract.id,
               result,
               undefined,
@@ -88,11 +90,11 @@ export async function POST(request: NextRequest) {
             );
 
             // Save clauses
-            await saveClauses(userId, analysis.id, contract.id, result.clauses);
+            await saveClauses(dbUserId, analysis.id, contract.id, result.clauses);
 
             // Save findings
             const savedFindings = await saveFindings(
-              userId,
+              dbUserId,
               analysis.id,
               contract.id,
               result.findings
@@ -104,11 +106,11 @@ export async function POST(request: NextRequest) {
                 (f) => f.category === grounding.finding_category
               );
               for (const finding of relatedFindings) {
-                await saveSources(userId, finding.id, grounding.sources);
+                await saveSources(dbUserId, finding.id, grounding.sources);
               }
             }
 
-            // Send result with contract and analysis IDs
+            // Send result with full data for the frontend to display
             controller.enqueue(
               encoder.encode(
                 `data: ${JSON.stringify({
@@ -118,8 +120,9 @@ export async function POST(request: NextRequest) {
                     contractId: contract.id,
                     classification: result.classification,
                     structure: result.structure,
-                    clausesCount: result.clauses.length,
-                    findingsCount: result.findings.length,
+                    clauses: result.clauses,
+                    findings: result.findings,
+                    legalGrounding: result.legalGrounding,
                     latencyMs,
                   },
                 })}\n\n`
