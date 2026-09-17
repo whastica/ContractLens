@@ -202,7 +202,7 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
 
             let event: SSEEvent;
             try {
-              event = JSON.parse(line) as SSEEvent;
+              event = JSON.parse(line);
             } catch {
               continue;
             }
@@ -234,7 +234,7 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
 
             if (event.type === "result") {
               if (abortRef.current) return;
-              const data = (event as { data: AnalysisResult }).data;
+              const data = (event as unknown as { data: AnalysisResult }).data;
               setState((prev) => ({
                 ...prev,
                 status: "done",

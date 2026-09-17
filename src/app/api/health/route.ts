@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { isDev, useMockAI, useMockDB } from "@/lib/env";
 
 export async function GET() {
-  const health = {
+  const health: Record<string, unknown> = {
     status: "ok",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,

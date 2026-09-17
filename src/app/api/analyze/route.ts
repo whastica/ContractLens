@@ -1,7 +1,7 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { catchApiError, apiResponse, apiError } from "@/lib/api";
+import { catchApiError, apiError } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { clerkIdToUuid } from "@/lib/supabase";
 import { runAnalysisPipeline } from "@/services/ai/analysis.service";
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     // If contractId provided, verify it belongs to user
-    let contract = null;
+    let contract: Awaited<ReturnType<typeof getContractById>> = null;
     if (contractId) {
       contract = await getContractById(contractId, dbUserId);
       if (!contract) {
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return new Response(stream, {
+    return new NextResponse(stream, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",

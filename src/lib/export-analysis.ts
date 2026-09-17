@@ -28,7 +28,7 @@ const SEVERITY_COLORS: Record<string, [number, number, number]> = {
   undetermined: COLORS.muted,
 };
 
-function downloadPDF(doc: ReturnType<typeof import("jspdf")["default"]>, filename: string) {
+function downloadPDF(doc: InstanceType<typeof import("jspdf").default>, filename: string) {
   const isIOS =
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -197,7 +197,7 @@ export async function exportAnalysisToPDF(
     ["Renovacion", structure.renewalTerms],
     ["Terminacion", structure.terminationTerms],
     ["Jurisdiccion", structure.jurisdiction],
-  ].filter(([, value]) => value);
+  ].filter((pair): pair is [string, string] => !!pair[1]);
 
   if (infoFields.length > 0) {
     autoTable(doc, {
@@ -262,7 +262,7 @@ export async function exportAnalysisToPDF(
       doc.setFontSize(7);
       doc.setFont("helvetica", "bold");
       doc.text(
-        SEVERITY_LABEL[finding.severity] ?? finding.severity.toUpperCase(),
+        SEVERITY_LABELS[finding.severity] ?? finding.severity.toUpperCase(),
         margin + 11,
         y + 4,
         { align: "center" }

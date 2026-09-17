@@ -15,16 +15,12 @@ export default function LoginPage() {
         routing="path"
         path="/login"
         signUpUrl="/register"
-        afterSignInUrl="/dashboard"
+        forceRedirectUrl="/dashboard"
         appearance={{
           variables: {
             colorPrimary: "#2563eb",
             colorBackground: "#131b2e",
-            colorInputBackground: "#0f1729",
-            colorInputText: "#f0f4ff",
-            colorText: "#f0f4ff",
-            colorTextSecondary: "#8896b3",
-            colorTextOnPrimaryBackground: "#ffffff",
+            colorInput: "#0f1729",
             borderRadius: "0.75rem",
           },
           elements: {
