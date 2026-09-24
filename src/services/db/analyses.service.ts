@@ -7,7 +7,8 @@ export async function createAnalysis(
   contractId: string,
   result: PipelineResult,
   tokensUsed?: number,
-  latencyMs?: number
+  latencyMs?: number,
+  area?: string
 ): Promise<DbAnalysis> {
   const stop = logger.time("createAnalysis");
   const supabase = getSupabaseServer();
@@ -20,6 +21,7 @@ export async function createAnalysis(
       user_id: userId,
       contract_id: contractId,
       status: "completed",
+      area: area ?? "general",
       contract_type: result.classification.type,
       parties: result.structure.parties,
       duration: result.structure.duration,
