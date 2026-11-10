@@ -11,6 +11,7 @@ export async function createContract(
     rawText: string;
     detectedType?: string;
     confirmedType?: string;
+    area?: string;
   }
 ): Promise<DbContract> {
   const stop = logger.time("createContract");
@@ -27,6 +28,7 @@ export async function createContract(
       raw_text: data.rawText,
       detected_type: data.detectedType ?? null,
       confirmed_type: data.confirmedType ?? null,
+      area: data.area ?? "general",
       status: "uploaded",
     })
     .select()

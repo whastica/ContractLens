@@ -7,12 +7,14 @@ import { AnalysisSidebar } from "./AnalysisSidebar";
 import { AnalysisLoader } from "./AnalysisLoader";
 import { AnalysisResults } from "./AnalysisResults";
 import { AnalysisEmpty } from "./AnalysisEmpty";
-import type { ContractType } from "@/types";
+import { AREA_THEMES } from "@/constants";
+import type { LegalArea } from "@/types";
 
 export function AnalysisContainer() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [text, setText] = useState("");
-  const [contractType, setContractType] = useState<ContractType | null>(null);
+  const [area, setArea] = useState<LegalArea>("general");
+  const [documentType, setDocumentType] = useState<string | null>(null);
 
   const { result: persistedResult, setResult, clearResult } = useLastAnalysis();
 
@@ -30,15 +32,23 @@ export function AnalysisContainer() {
   const activeResult = freshResult ?? (status === "idle" ? persistedResult : null);
   const showResults = !!(status === "done" && (freshResult || persistedResult));
 
+  const theme = AREA_THEMES[area];
+
+  const handleAreaChange = (newArea: LegalArea) => {
+    setArea(newArea);
+    setDocumentType(null);
+  };
+
   const handleAnalyze = async () => {
-    await analyze(selectedFile, text, contractType);
+    await analyze(selectedFile, text, undefined, area);
   };
 
   const handleReset = () => {
     reset();
     setSelectedFile(null);
     setText("");
-    setContractType(null);
+    setArea("general");
+    setDocumentType(null);
     clearResult();
   };
 
@@ -75,17 +85,28 @@ export function AnalysisContainer() {
   // Show input form (idle state)
   if (status === "idle" && !activeResult) {
     return (
-      <AnalysisSidebar
-        selectedFile={selectedFile}
-        onFileSelect={setSelectedFile}
-        onFileClear={() => setSelectedFile(null)}
-        text={text}
-        onTextChange={setText}
-        contractType={contractType}
-        onContractTypeChange={setContractType}
-        onAnalyze={handleAnalyze}
-        disabled={!selectedFile && text.trim().length < 100}
-      />
+      <div
+        className="rounded-2xl border transition-all duration-500 ease-in-out p-5 md:p-6"
+        style={{
+          background: theme.gradient,
+          borderColor: theme.border,
+          boxShadow: `0 0 40px ${theme.glow}, inset 0 1px 0 rgba(255,255,255,0.03)`,
+        }}
+      >
+        <AnalysisSidebar
+          selectedFile={selectedFile}
+          onFileSelect={setSelectedFile}
+          onFileClear={() => setSelectedFile(null)}
+          text={text}
+          onTextChange={setText}
+          area={area}
+          onAreaChange={handleAreaChange}
+          documentType={documentType}
+          onDocumentTypeChange={setDocumentType}
+          onAnalyze={handleAnalyze}
+          disabled={!selectedFile && text.trim().length < 100}
+        />
+      </div>
     );
   }
 

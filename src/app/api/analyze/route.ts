@@ -5,6 +5,7 @@ import { catchApiError, apiError } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { clerkIdToUuid } from "@/lib/supabase";
 import { runAnalysisPipeline } from "@/services/ai/analysis.service";
+import { isValidLegalArea } from "@/services/ai/pipeline-resolver";
 import {
   createContract,
   updateContractStatus,
@@ -14,6 +15,7 @@ import { createAnalysis } from "@/services/db/analyses.service";
 import { saveClauses } from "@/services/db/clauses.service";
 import { saveFindings, saveSources } from "@/services/db/findings.service";
 import { useMockDB } from "@/lib/env";
+import type { LegalArea } from "@/types";
 
 export async function POST(request: NextRequest) {
   return catchApiError(async () => {
@@ -27,11 +29,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { contractId, text, contractType } = body as {
+    const { contractId, text, contractType, area: rawArea } = body as {
       contractId?: string;
       text?: string;
       contractType?: string;
+      area?: string;
     };
+
+    // Validate and normalize area
+    const area: LegalArea = isValidLegalArea(rawArea) ? rawArea : "general";
 
     if (!text || typeof text !== "string" || text.length < 100) {
       return apiError("BAD_REQUEST", "El texto del contrato debe tener al menos 100 caracteres.");
@@ -52,14 +58,14 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Run the analysis pipeline
+          // Run the analysis pipeline with area
           const result = await runAnalysisPipeline(text, {
             onProgress: (phase, message) => {
               controller.enqueue(
                 encoder.encode(`data: ${JSON.stringify({ type: "progress", phase, message })}\n\n`)
               );
             },
-          }, { contractType });
+          }, { contractType, area });
 
           const latencyMs = Date.now() - startTime;
 
@@ -75,6 +81,7 @@ export async function POST(request: NextRequest) {
                 rawText: text,
                 detectedType: result.classification.type,
                 confirmedType: contractType ?? undefined,
+                area,
               });
             } else {
               await updateContractStatus(contract.id, dbUserId, "completed");
@@ -86,7 +93,8 @@ export async function POST(request: NextRequest) {
               contract.id,
               result,
               undefined,
-              latencyMs
+              latencyMs,
+              area
             );
 
             // Save clauses

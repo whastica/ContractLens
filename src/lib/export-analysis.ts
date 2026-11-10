@@ -1,4 +1,5 @@
 import type { AnalysisResult } from "@/hooks/useAnalysis";
+import { LEGAL_AREAS } from "@/constants";
 
 // Colors matching our navy/gold palette
 const COLORS = {
@@ -115,7 +116,9 @@ export async function exportAnalysisToPDF(
   }
 
   // Metadata table
+  const areaLabel = LEGAL_AREAS.find((a) => a.id === result.area)?.label ?? "General";
   const meta = [
+    ["Area legal", areaLabel],
     ["Tipo de contrato", result.classification.type.replace(/_/g, " ")],
     ["Confianza de clasificacion", `${(result.classification.confidence * 100).toFixed(0)}%`],
     ["Razonamiento", result.classification.reasoning],

@@ -38,6 +38,7 @@ export interface DbContract {
   raw_text:      string;
   detected_type: string | null;
   confirmed_type: string | null;
+  area:          string;
   status:        "uploaded" | "processing" | "completed" | "error";
   created_at:    string;
   updated_at:    string;
@@ -48,6 +49,7 @@ export interface DbAnalysis {
   contract_id:   string;
   user_id:       string;
   status:        "pending" | "processing" | "completed" | "error";
+  area:          string;
   contract_type: string | null;
   parties:       Record<string, unknown>[] | null;
   duration:      string | null;

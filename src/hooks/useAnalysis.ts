@@ -5,6 +5,7 @@ import type {
   AnalysisPhase,
   PipelineStep,
   ContractType,
+  LegalArea,
   SSEEvent,
 } from "@/types";
 import { ANALYSIS_STEPS } from "@/constants";
@@ -14,6 +15,7 @@ export type AnalysisStatus = "idle" | "uploading" | "analyzing" | "done" | "erro
 export interface AnalysisResult {
   id?: string;
   contractId?: string;
+  area?: string;
   classification: {
     type: ContractType;
     confidence: number;
@@ -70,7 +72,7 @@ interface UseAnalysisState {
 }
 
 interface UseAnalysisReturn extends UseAnalysisState {
-  analyze: (file: File | null, text: string, contractType?: ContractType | null) => Promise<void>;
+  analyze: (file: File | null, text: string, contractType?: ContractType | null, area?: LegalArea) => Promise<void>;
   reset: () => void;
 }
 
@@ -126,7 +128,7 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
   }, []);
 
   const analyze = useCallback(
-    async (file: File | null, text: string, contractType?: ContractType | null) => {
+    async (file: File | null, text: string, contractType?: ContractType | null, area?: LegalArea) => {
       if (!file && !text.trim()) return;
 
       abortRef.current = false;
@@ -167,6 +169,7 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
           body: JSON.stringify({
             text: inputText,
             ...(contractType ? { contractType } : {}),
+            ...(area && area !== "general" ? { area } : {}),
           }),
         });
 

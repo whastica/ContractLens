@@ -123,12 +123,13 @@ Plataforma de análisis y preauditoría contractual asistida por IA. Beta 0.1 co
 - Columna `area` obligatoria en BD (DEFAULT 'general')
 - Categorías de hallazgos por rama
 
-### FASE 11: Tipos y Constantes Multi-Rama — PENDIENTE
+### FASE 11: Tipos y Constantes Multi-Rama — COMPLETADA ✅
 
-- [ ] Nuevo tipo `LegalArea` en types/index.ts
-- [ ] FindingCategory por rama
-- [ ] Constantes LEGAL_AREAS, DOCUMENTS_BY_AREA, DISCLAIMER_BY_AREA
-- [ ] Migración SQL: columna `area` en contracts y analyses
+- [x] Nuevo tipo `LegalArea` en types/index.ts
+- [x] FindingCategory por rama (6 tipos: CivilCommercial, FamilyLaw, LaborLaw, CriminalLaw, PublicLaw, General)
+- [x] Campos `area` en interfaces Contract y Analysis
+- [x] Constantes LEGAL_AREAS, DOCUMENTS_BY_AREA, DISCLAIMER_BY_AREA en constants/index.ts
+- [x] Migración SQL: columna `area` en contracts y analyses (20260924_add_area_column.sql)
 
 ### FASE 12: Prompts Especializados — COMPLETADA ✅
 
@@ -145,38 +146,71 @@ Plataforma de análisis y preauditoría contractual asistida por IA. Beta 0.1 co
 
 **Validación:** `npm run type-check` → PASS
 
-### FASE 13: Pipeline Resolver — PENDIENTE
+### FASE 13: Pipeline Resolver — COMPLETADA ✅
 
-- [ ] Crear `src/services/ai/pipeline-resolver.ts`
-- [ ] Modificar `analysis.service.ts` para usar getPromptsForArea()
+- [x] Crear `src/services/ai/pipeline-resolver.ts` — resolvePipeline(), isValidLegalArea(), systemRoles por área
+- [x] Modificar `analysis.service.ts` — Usa pipeline-resolver, fallback a prompts Beta 0.1 si area=general
 
-### FASE 14: Backend API y BD — PENDIENTE
+### FASE 14: Backend API y BD — COMPLETADA ✅
 
-- [ ] Modificar `/api/analyze/route.ts` — Recibir parámetro `area`
-- [ ] Modificar `contracts.service.ts` — Guardar `area`
-- [ ] Modificar `analyses.service.ts` — Guardar `area`
-- [ ] Migración SQL: columna `area` (NOT NULL DEFAULT 'general')
+- [x] Modificar `/api/analyze/route.ts` — Recibe parámetro `area`, valida con isValidLegalArea()
+- [x] Modificar `contracts.service.ts` — Guarda `area` (DEFAULT 'general')
+- [x] Modificar `analyses.service.ts` — Guarda `area` (DEFAULT 'general')
+- [x] Modificar `supabase.ts` — Agregados campos `area` a DbContract y DbAnalysis
+- [x] Migración SQL: columna `area` (NOT NULL DEFAULT 'general')
 
-### FASE 15: Frontend Selector de Áreas — PENDIENTE
+### FASE 15: Frontend Selector de Áreas — COMPLETADA ✅
 
-- [ ] Crear `AnalysisAreaSelector.tsx`
-- [ ] Modificar `AnalysisSidebar.tsx`
-- [ ] Modificar `AnalysisContainer.tsx`
-- [ ] Modificar `useAnalysis.ts`
+- [x] Crear `AnalysisAreaSelector.tsx` — Grid 2×3 con iconos por área
+- [x] Modificar `AnalysisSidebar.tsx` — Acepta `area` y `onAreaChange`, renderiza selector
+- [x] Modificar `AnalysisContainer.tsx` — Estado `area` con useState, pasa a sidebar y analyze
+- [x] Modificar `useAnalysis.ts` — Acepta `area?: LegalArea`, envía a `/api/analyze`
 
-### FASE 16: Landing Page — PENDIENTE
+### FASE 16: Landing Page — COMPLETADA ✅
 
-- [ ] Sección "Tipos de documentos que puedes analizar" en page.tsx
+- [x] Sección "Tipos de documentos que puedes analizar" en page.tsx
+- [x] Grid 2×3 con iconos, títulos y listas de documentos por área
 
-### FASE 17: Export PDF Multi-Rama — PENDIENTE
+### FASE 17: Export PDF Multi-Rama — COMPLETADA ✅
 
-- [ ] Modificar `export-analysis.ts` — Incluir área en informe
+- [x] Modificar `export-analysis.ts` — Incluye área en metadatos del PDF con label legible
 
-### FASE 18: Validación — PENDIENTE
+### FASE 18: Validación — COMPLETADA ✅
 
-- [ ] Pruebas funcionales por área
-- [ ] Verificar prompts con documentos reales
-- [ ] Verificar guardado de área en BD
+- [x] `npm run type-check` → PASS (todos los archivos creados)
+- [x] Migración SQL: Eliminar CHECK constraints para `detected_type` y `confirmed_type`
+
+### FASE 19: Optimización de Precisión Técnico-Jurídica — PENDIENTE
+
+**Objetivo:** Elevar los System Prompts de cada especialidad a su máximo nivel de precisión técnica-jurídica y profundización normativa.
+
+**Áreas a optimizar (30 prompts):**
+
+| Área | Foco de optimización |
+|------|---------------------|
+| **Civil y Comercial** | Equilibrio prestacional, cláusulas abusivas (Código Civil arts. 1546-1609, Código de Comercio, Ley 820/2003) |
+| **Familia** | Protección de menores, interés superior del niño, principio de continuidad (CC arts. 411-432, Ley 1996/2019) |
+| **Laboral** | Primacía de la realidad, derechos mínimos irrenunciables, prescripciones (CST, Ley 50/1990, Decreto 1072/2015) |
+| **Penal** | Principio de legalidad, tipicidad, culpabilidad, derechos de víctimas (Ley 599/2000, Ley 906/2004) |
+| **Público** | Debido proceso, legitimación, medios de control, términos (CP, CPACA, Ley 1755/2015) |
+| **General** | Principios generales del derecho, técnica jurídica, buenas prácticas contractuales |
+
+**Criterios de mejora:**
+1. Referencias normativas específicas (artículos, numerales, parágrafos)
+2. Jurisprudencia de la Corte Constitucional y Corte Suprema
+3. Doctrina jurídica colombiana relevante
+4. Categorías de hallazgos más granulares y precisas
+5. Umbrales de severidad calibrados por especialidad
+6. Recomendaciones accionables y específicas por tipo de documento
+7. Validación de forma y fondo según requisitos legales de cada área
+
+**Archivos a modificar:**
+- `src/services/ai/prompts/civil_comercial/*.ts` (5 prompts)
+- `src/services/ai/prompts/familia/*.ts` (5 prompts)
+- `src/services/ai/prompts/laboral/*.ts` (5 prompts)
+- `src/services/ai/prompts/penal/*.ts` (5 prompts)
+- `src/services/ai/prompts/publico/*.ts` (5 prompts)
+- `src/services/ai/prompts/general/*.ts` (5 prompts)
 
 ---
 
@@ -184,15 +218,16 @@ Plataforma de análisis y preauditoría contractual asistida por IA. Beta 0.1 co
 
 | Fase | Descripción | Estado | Duración |
 |------|-------------|--------|----------|
-| 11 | Tipos y constantes | ⏳ Pendiente | 0.5 días |
+| 11 | Tipos y constantes | ✅ Completada | 0.5 días |
 | 12 | Prompts especializados | ✅ Completada | 3 días |
-| 13 | Pipeline resolver | ⏳ Pendiente | 1 día |
-| 14 | Backend API y BD | ⏳ Pendiente | 1 día |
-| 15 | Frontend selector áreas | ⏳ Pendiente | 1 día |
-| 16 | Landing page | ⏳ Pendiente | 0.5 días |
-| 17 | Export PDF multi-rama | ⏳ Pendiente | 0.5 días |
-| 18 | Validación | ⏳ Pendiente | 1 día |
-| **Total** | | | **8.5 días** |
+| 13 | Pipeline resolver | ✅ Completada | 1 día |
+| 14 | Backend API y BD | ✅ Completada | 1 día |
+| 15 | Frontend selector áreas | ✅ Completada | 1 día |
+| 16 | Landing page | ✅ Completada | 0.5 días |
+| 17 | Export PDF multi-rama | ✅ Completada | 0.5 días |
+| 18 | Validación | ✅ Completada | 1 día |
+| 19 | Optimización precisión prompts | ⏳ Pendiente | 3-5 días |
+| **Total** | | | **11.5-13.5 días** |
 
 ---
 

@@ -1,3 +1,101 @@
+// ─── Domain: Legal Area ─────────────────────────────────────────────────────
+export type LegalArea =
+  | "civil_comercial"
+  | "familia"
+  | "laboral"
+  | "penal"
+  | "publico"
+  | "general";
+
+export interface AreaTheme {
+  gradient: string;
+  glow: string;
+  border: string;
+}
+
+// FindingCategory por rama del derecho
+export type CivilCommercialFindingCategory =
+  | "terminacion_anticipada"
+  | "penalidad"
+  | "confidencialidad"
+  | "propiedad_intelectual"
+  | "pago"
+  | "obligaciones"
+  | "responsabilidad"
+  | "garantia"
+  | "seguro"
+  | "ley_aplicable"
+  | "jurisdiccion"
+  | "arrendamiento_canon"
+  | "arrendamiento_subarriendo"
+  | "arrendamiento_mejoras"
+  | "arrendamiento_deposito"
+  | "titulo_valor_elementos"
+  | "titulo_valor_endoso"
+  | "otro";
+
+export type FamilyLawFindingCategory =
+  | "alimentos"
+  | "custodia"
+  | "patria_potestad"
+  | "regimen_visitas"
+  | "divorcio"
+  | "liquidacion_sociedad"
+  | "bienes"
+  | "apoyo"
+  | "registro_civil"
+  | "derechos_menores"
+  | "otro";
+
+export type LaborLawFindingCategory =
+  | "despido"
+  | "prestaciones_sociales"
+  | "jornada_laboral"
+  | "salario"
+  | "seguridad_social"
+  | "subordinacion_disfrazada"
+  | "competencia_despues_terminacion"
+  | "derechos_minimos"
+  | "sanciones_disciplinarias"
+  | "ley_aplicable"
+  | "otro";
+
+export type CriminalLawFindingCategory =
+  | "prescripcion_accion_penal"
+  | "terminos_procesales"
+  | "derechos_victima"
+  | "debido_proceso"
+  | "legalidad_pruebas"
+  | "fundamentacion_juridica"
+  | "consistencia_narrativa"
+  | "antecedentes_penales"
+  | "conciliacion_penal"
+  | "otro";
+
+export type PublicLawFindingCategory =
+  | "legitimacion_activa"
+  | "inmediatez_tutela"
+  | "competencia_autoridad"
+  | "fundamentacion"
+  | "via_gubernativa"
+  | "terminos_procesales"
+  | "debido_proceso"
+  | "claridad_peticiones"
+  | "medida_provisional"
+  | "insolvencia"
+  | "otro";
+
+export type GeneralFindingCategory =
+  | "claridad_obligaciones"
+  | "coherencia_interna"
+  | "ambiguedad"
+  | "equilibrio_partes"
+  | "completitud"
+  | "forma"
+  | "sintaxis_legal"
+  | "ley_aplicable"
+  | "otro";
+
 // ─── Domain: Contract ─────────────────────────────────────────────────────────
 export type ContractType = "prestacion_servicios" | "laboral" | "nda" | "otro";
 export type ContractFiletype = "pdf" | "docx";
@@ -19,6 +117,7 @@ export interface Contract {
   rawText: string;
   detectedType?: ContractType;
   confirmedType?: ContractType;
+  area: LegalArea;
   status: ContractStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -68,6 +167,7 @@ export interface Analysis {
   contractId: string;
   userId: string;
   status: AnalysisStatus;
+  area: LegalArea;
   
   summary?: AnalysisSummary;
   healthCheck?: AnalysisHealthCheck;

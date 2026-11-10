@@ -1,11 +1,29 @@
 import Link from "next/link";
-import { ArrowRight, Shield, Clock, Search, FileText } from "lucide-react";
+import { ArrowRight, Shield, Clock, Search, FileText, Scale, Users, Briefcase, Gavel, Landmark, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MarketingNav } from "@/components/layout/MarketingNav";
 import { MarketingFooter } from "@/components/layout/MarketingFooter";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
-import { ROUTES } from "@/constants";
+import { ROUTES, DOCUMENTS_BY_AREA } from "@/constants";
+
+const AREA_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  civil_comercial: Scale,
+  familia: Users,
+  laboral: Briefcase,
+  penal: Gavel,
+  publico: Landmark,
+  general: BookOpen,
+};
+
+const AREA_LABELS: Record<string, string> = {
+  civil_comercial: "Civil y Comercial",
+  familia: "Familia",
+  laboral: "Laboral",
+  penal: "Penal",
+  publico: "Publico",
+  general: "General",
+};
 
 export default function HomePage() {
   return (
@@ -120,6 +138,47 @@ export default function HomePage() {
                 <p className="text-sm text-muted-foreground">{item.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Document types by area */}
+      <section id="document-types" className="relative z-10 px-6 py-20">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-center font-heading text-2xl font-700 mb-4">
+            Tipos de documentos que puedes analizar
+          </h2>
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+            Selecciona el area legal y nuestro agente especializado analizara tu documento con el marco normativo correspondiente.
+          </p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(Object.keys(DOCUMENTS_BY_AREA) as Array<keyof typeof DOCUMENTS_BY_AREA>).map((areaId) => {
+              const Icon = AREA_ICONS[areaId] ?? FileText;
+              const docs = DOCUMENTS_BY_AREA[areaId];
+              return (
+                <div key={areaId} className="rounded-xl border border-border bg-card/50 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="font-heading text-lg font-600">{AREA_LABELS[areaId]}</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {docs.slice(0, 5).map((doc) => (
+                      <li key={doc} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/50" />
+                        {doc}
+                      </li>
+                    ))}
+                    {docs.length > 5 && (
+                      <li className="text-xs text-muted-foreground/70 pl-3.5">
+                        +{docs.length - 5} mas...
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
